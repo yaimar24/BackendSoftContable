@@ -1,0 +1,6 @@
+@BackendSoftContable_HostAddress = http://localhost:5256
+
+GET {{BackendSoftContable_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
