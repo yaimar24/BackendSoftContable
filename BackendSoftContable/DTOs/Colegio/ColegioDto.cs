@@ -1,4 +1,4 @@
-﻿namespace BackendSoftContable.DTOs
+﻿namespace BackendSoftContable.DTOs.Colegio
 {
     public class ColegioDTO
     {
@@ -8,6 +8,5 @@
         public string Direccion { get; set; } = string.Empty;
         public string PlanSeleccionado { get; set; } = "Premium";
         public string? LogoPath { get; set; }
-        public string? ArchivoDianPath { get; set; }
     }
 }

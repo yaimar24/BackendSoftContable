@@ -1,40 +1,52 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BackendSoftContable.DTOs.Colegio;
 using BackendSoftContable.DTOs;
-using BackendSoftContable.Services;
+using Microsoft.AspNetCore.Mvc;
 
-namespace BackendSoftContable.Controllers
+[Route("api/[controller]")]
+[ApiController]
+public class ColegioController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ColegioController : ControllerBase
+    private readonly IColegioService _service;
+
+    public ColegioController(IColegioService service)
     {
-        private readonly IColegioService _service;
+        _service = service;
+    }
 
-        public ColegioController(IColegioService service)
-        {
-            _service = service;
-        }
+    // Registro de colegio + admin
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromForm] ColegioCreateDTO dto)
+    {
+        var result = await _service.RegisterAsync(dto);
+        if (!result.Success)
+            return BadRequest(result);
+        return Ok(result);
+    }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] ColegioCreateDTO dto)
-        {
-            try
-            {
-                var result = await _service.RegisterColegioAsync(dto);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
+    [HttpGet("{id}")]
+    public async Task<IActionResult> Get(int id)
+    {
+        var dto = await _service.GetByIdAsync(id);
+        if (dto == null) return NotFound();
+        return Ok(dto);
+    }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> Get(int id)
-        {
-            var dto = await _service.GetColegioByIdAsync(id);
-            if (dto == null) return NotFound();
-            return Ok(dto);
-        }
+    [HttpGet("{id}/detalle")]
+    public async Task<IActionResult> GetDetalle(int id)
+    {
+        var dto = await _service.GetByIdAsync(id);
+        if (dto == null) return NotFound();
+        return Ok(dto);
+    }
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, [FromForm] ColegioUpdateDTO dto)
+    {
+        if (id != dto.Id) return BadRequest("El ID no coincide");
+
+        var result = await _service.UpdateAsync(dto);
+
+        if (!result.Success) return NotFound(result);
+
+        return Ok(result);
     }
 }

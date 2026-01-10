@@ -30,6 +30,7 @@ namespace BackendSoftContable.Data.Repositories
         {
             return await _context.Usuarios
                                  .Include(u => u.Colegio)
+                                 .Include(u => u.Roles)
                                  .FirstOrDefaultAsync(u => u.Email == email);
         }
 
@@ -39,5 +40,11 @@ namespace BackendSoftContable.Data.Repositories
                                  .Where(u => u.ColegioId == colegioId)
                                  .ToListAsync();
         }
+
+        public async Task<bool> ExistsByEmailAsync(string email)
+        {
+            return await _context.Usuarios.AnyAsync(u => u.Email == email);
+        }
+
     }
 }

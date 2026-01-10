@@ -1,4 +1,5 @@
 ﻿using BackendSoftContable.Models;
+using System;
 
 namespace BackendSoftContable.Data.Repositories
 {
@@ -8,5 +9,11 @@ namespace BackendSoftContable.Data.Repositories
         Task<Usuario?> GetByIdAsync(int id);
         Task<Usuario?> GetByEmailAsync(string email);
         Task<IEnumerable<Usuario>> GetAllByColegioAsync(int colegioId);
+
+        Task<bool> ExistsByEmailAsync(string email);
+
+
     }
+
+
 }

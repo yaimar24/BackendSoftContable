@@ -22,7 +22,8 @@ namespace BackendSoftContable.Data.Repositories
         public async Task<Colegio?> GetByIdAsync(int id)
         {
             return await _context.Colegios
-                                 .Include(c => c.Usuarios) // trae los usuarios
+                                 .Include(c => c.Usuarios)
+                                 .Include(c => c.RepresentantesLegales) 
                                  .FirstOrDefaultAsync(c => c.Id == id);
         }
 
@@ -31,6 +32,21 @@ namespace BackendSoftContable.Data.Repositories
             return await _context.Colegios
                                  .Include(c => c.Usuarios)
                                  .ToListAsync();
+        
+
+
+    }
+
+        public async Task<bool> ExistsByNitAsync(string nit)
+        {
+            return await _context.Colegios.AnyAsync(c => c.Nit == nit);
         }
+
+        public async Task UpdateAsync(Colegio colegio)
+        {
+            _context.Colegios.Update(colegio);
+            await _context.SaveChangesAsync();
+        }
+
     }
 }

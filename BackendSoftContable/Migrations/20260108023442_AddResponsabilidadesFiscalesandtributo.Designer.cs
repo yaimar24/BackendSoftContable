@@ -4,6 +4,7 @@ using BackendSoftContable.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BackendSoftContable.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260108023442_AddResponsabilidadesFiscalesandtributo")]
+    partial class AddResponsabilidadesFiscalesandtributo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,49 +24,6 @@ namespace BackendSoftContable.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("BackendSoftContable.Models.ActividadEconomica", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Codigo")
-                        .IsRequired()
-                        .HasMaxLength(4)
-                        .HasColumnType("nvarchar(4)");
-
-                    b.Property<string>("Descripcion")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ActividadEconomica");
-                });
-
-            modelBuilder.Entity("BackendSoftContable.Models.Ciudad", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Codigo")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Ciudad");
-                });
 
             modelBuilder.Entity("BackendSoftContable.Models.Colegio", b =>
                 {
@@ -73,13 +33,28 @@ namespace BackendSoftContable.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ActividadEconomicaId")
-                        .HasColumnType("int");
+                    b.Property<string>("ArchivoDianPath")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("CiudadId")
-                        .HasColumnType("int");
+                    b.Property<string>("Cedula")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Ciudad")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CodigoActividadEconomica")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Direccion")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("FechaCertificado")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Identificacion")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -107,6 +82,14 @@ namespace BackendSoftContable.Migrations
                     b.Property<int>("RegimenIvaId")
                         .HasColumnType("int");
 
+                    b.Property<string>("RepresentanteLegal")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ResDian")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("ResponsabilidadFiscalId")
                         .HasColumnType("int");
 
@@ -119,17 +102,10 @@ namespace BackendSoftContable.Migrations
                     b.Property<int>("TributoId")
                         .HasColumnType("int");
 
-                    b.Property<bool?>("UsaDobleImpuesto")
-                        .HasColumnType("bit");
-
-                    b.Property<bool?>("usaImpuestoAdValorem")
-                        .HasColumnType("bit");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("ActividadEconomicaId");
-
-                    b.HasIndex("CiudadId");
+                    b.HasIndex("Cedula")
+                        .IsUnique();
 
                     b.HasIndex("Nit")
                         .IsUnique();
@@ -195,27 +171,6 @@ namespace BackendSoftContable.Migrations
                     b.ToTable("ResponsabilidadFiscal");
                 });
 
-            modelBuilder.Entity("BackendSoftContable.Models.TipoIdentificacion", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CodigoDian")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TipoIdentificacion");
-                });
-
             modelBuilder.Entity("BackendSoftContable.Models.Tributo", b =>
                 {
                     b.Property<int>("Id")
@@ -236,61 +191,7 @@ namespace BackendSoftContable.Migrations
                     b.ToTable("Tributo");
                 });
 
-            modelBuilder.Entity("RepresentanteLegal", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ColegioId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("NumeroIdentificacion")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("TipoIdentificacionId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ColegioId");
-
-                    b.HasIndex("NumeroIdentificacion")
-                        .IsUnique();
-
-                    b.HasIndex("TipoIdentificacionId");
-
-                    b.ToTable("RepresentantesLegales");
-                });
-
-            modelBuilder.Entity("Roles", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Descripcion")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Roles");
-                });
-
-            modelBuilder.Entity("Usuario", b =>
+            modelBuilder.Entity("BackendSoftContable.Models.Usuario", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -313,11 +214,9 @@ namespace BackendSoftContable.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("RolId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RolesId")
-                        .HasColumnType("int");
+                    b.Property<string>("Rol")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -326,25 +225,11 @@ namespace BackendSoftContable.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.HasIndex("RolesId");
-
                     b.ToTable("Usuarios");
                 });
 
             modelBuilder.Entity("BackendSoftContable.Models.Colegio", b =>
                 {
-                    b.HasOne("BackendSoftContable.Models.ActividadEconomica", "ActividadEconomica")
-                        .WithMany("Colegios")
-                        .HasForeignKey("ActividadEconomicaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BackendSoftContable.Models.Ciudad", "Ciudad")
-                        .WithMany("Colegios")
-                        .HasForeignKey("CiudadId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("BackendSoftContable.Models.RegimenIva", "RegimenIva")
                         .WithMany("Colegios")
                         .HasForeignKey("RegimenIvaId")
@@ -363,10 +248,6 @@ namespace BackendSoftContable.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ActividadEconomica");
-
-                    b.Navigation("Ciudad");
-
                     b.Navigation("RegimenIva");
 
                     b.Navigation("ResponsabilidadFiscal");
@@ -374,26 +255,7 @@ namespace BackendSoftContable.Migrations
                     b.Navigation("Tributo");
                 });
 
-            modelBuilder.Entity("RepresentanteLegal", b =>
-                {
-                    b.HasOne("BackendSoftContable.Models.Colegio", "Colegio")
-                        .WithMany("RepresentantesLegales")
-                        .HasForeignKey("ColegioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BackendSoftContable.Models.TipoIdentificacion", "TipoIdentificacion")
-                        .WithMany()
-                        .HasForeignKey("TipoIdentificacionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Colegio");
-
-                    b.Navigation("TipoIdentificacion");
-                });
-
-            modelBuilder.Entity("Usuario", b =>
+            modelBuilder.Entity("BackendSoftContable.Models.Usuario", b =>
                 {
                     b.HasOne("BackendSoftContable.Models.Colegio", "Colegio")
                         .WithMany("Usuarios")
@@ -401,31 +263,11 @@ namespace BackendSoftContable.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Roles", "Roles")
-                        .WithMany("Usuarios")
-                        .HasForeignKey("RolesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Colegio");
-
-                    b.Navigation("Roles");
-                });
-
-            modelBuilder.Entity("BackendSoftContable.Models.ActividadEconomica", b =>
-                {
-                    b.Navigation("Colegios");
-                });
-
-            modelBuilder.Entity("BackendSoftContable.Models.Ciudad", b =>
-                {
-                    b.Navigation("Colegios");
                 });
 
             modelBuilder.Entity("BackendSoftContable.Models.Colegio", b =>
                 {
-                    b.Navigation("RepresentantesLegales");
-
                     b.Navigation("Usuarios");
                 });
 
@@ -442,11 +284,6 @@ namespace BackendSoftContable.Migrations
             modelBuilder.Entity("BackendSoftContable.Models.Tributo", b =>
                 {
                     b.Navigation("Colegios");
-                });
-
-            modelBuilder.Entity("Roles", b =>
-                {
-                    b.Navigation("Usuarios");
                 });
 #pragma warning restore 612, 618
         }
