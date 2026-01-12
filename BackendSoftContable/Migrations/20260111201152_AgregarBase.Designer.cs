@@ -4,6 +4,7 @@ using BackendSoftContable.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BackendSoftContable.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260111201152_AgregarBase")]
+    partial class AgregarBase
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -67,10 +70,11 @@ namespace BackendSoftContable.Migrations
 
             modelBuilder.Entity("BackendSoftContable.Models.Colegio", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasDefaultValueSql("NEWID()");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ActividadEconomicaId")
                         .HasColumnType("int");
@@ -128,11 +132,11 @@ namespace BackendSoftContable.Migrations
                     b.Property<bool?>("UsaDobleImpuesto")
                         .HasColumnType("bit");
 
-                    b.Property<Guid?>("UsuarioActualizacionId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int?>("UsuarioActualizacionId")
+                        .HasColumnType("int");
 
-                    b.Property<Guid?>("UsuarioCreacionId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int?>("UsuarioCreacionId")
+                        .HasColumnType("int");
 
                     b.Property<bool?>("usaImpuestoAdValorem")
                         .HasColumnType("bit");
@@ -256,8 +260,8 @@ namespace BackendSoftContable.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<Guid>("ColegioId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("ColegioId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -305,13 +309,14 @@ namespace BackendSoftContable.Migrations
 
             modelBuilder.Entity("Usuario", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasDefaultValueSql("NEWID()");
+                        .HasColumnType("int");
 
-                    b.Property<Guid>("ColegioId")
-                        .HasColumnType("uniqueidentifier");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ColegioId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -335,11 +340,11 @@ namespace BackendSoftContable.Migrations
                     b.Property<int>("RolesId")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("UsuarioActualizacionId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int?>("UsuarioActualizacionId")
+                        .HasColumnType("int");
 
-                    b.Property<Guid?>("UsuarioCreacionId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int?>("UsuarioCreacionId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 

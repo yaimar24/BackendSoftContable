@@ -4,9 +4,9 @@ using System.Collections.Generic;
 
 namespace BackendSoftContable.Models
 {
-    public class Colegio
+    public class Colegio: BaseEntity
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         public string NombreColegio { get; set; } = string.Empty;
         public string Nit { get; set; } = string.Empty;

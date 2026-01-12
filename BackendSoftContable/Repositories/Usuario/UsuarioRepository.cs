@@ -19,7 +19,7 @@ namespace BackendSoftContable.Data.Repositories
             return usuario;
         }
 
-        public async Task<Usuario?> GetByIdAsync(int id)
+        public async Task<Usuario?> GetByIdAsync(Guid id)
         {
             return await _context.Usuarios
                                  .Include(u => u.Colegio)
@@ -33,8 +33,7 @@ namespace BackendSoftContable.Data.Repositories
                                  .Include(u => u.Roles)
                                  .FirstOrDefaultAsync(u => u.Email == email);
         }
-
-        public async Task<IEnumerable<Usuario>> GetAllByColegioAsync(int colegioId)
+        public async Task<IEnumerable<Usuario>> GetAllByColegioAsync(Guid colegioId)
         {
             return await _context.Usuarios
                                  .Where(u => u.ColegioId == colegioId)

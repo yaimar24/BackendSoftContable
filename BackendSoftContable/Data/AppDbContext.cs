@@ -25,6 +25,20 @@ namespace BackendSoftContable.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            // --- CONFIGURACIÓN DE GUIDS ---
+
+            // Colegio Id como GUID
+            modelBuilder.Entity<Colegio>()
+                .Property(c => c.Id)
+                .HasDefaultValueSql("NEWID()"); // SQL Server generará el GUID automáticamente
+
+            // Usuario Id como GUID
+            modelBuilder.Entity<Usuario>()
+                .Property(u => u.Id)
+                .HasDefaultValueSql("NEWID()");
+
+            // --- RELACIONES ---
+
             // Colegio -> Usuarios (1:N)
             modelBuilder.Entity<Usuario>()
                 .HasOne(u => u.Colegio)
@@ -39,19 +53,21 @@ namespace BackendSoftContable.Data
                 .HasForeignKey(u => u.RolesId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Colegio - NIT único
+            // --- RESTRICCIONES Y ÚNICOS ---
+
             modelBuilder.Entity<Colegio>()
                 .HasIndex(c => c.Nit)
                 .IsUnique();
+
             modelBuilder.Entity<Colegio>()
                 .Property(c => c.Nit)
                 .HasMaxLength(20)
                 .IsRequired();
 
-            // Usuario - Email único
             modelBuilder.Entity<Usuario>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
+
             modelBuilder.Entity<Usuario>()
                 .Property(u => u.Email)
                 .HasMaxLength(150)
@@ -67,12 +83,13 @@ namespace BackendSoftContable.Data
             modelBuilder.Entity<RepresentanteLegal>()
                 .HasIndex(r => r.NumeroIdentificacion)
                 .IsUnique();
+
             modelBuilder.Entity<RepresentanteLegal>()
                 .Property(r => r.NumeroIdentificacion)
                 .HasMaxLength(20)
                 .IsRequired();
 
-            // ⚡ RepresentanteLegal -> Colegio (1:N)
+            // RepresentanteLegal -> Colegio (1:N)
             modelBuilder.Entity<RepresentanteLegal>()
                 .HasOne(r => r.Colegio)
                 .WithMany(c => c.RepresentantesLegales)

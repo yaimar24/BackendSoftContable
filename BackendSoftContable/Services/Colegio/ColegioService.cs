@@ -53,7 +53,7 @@ public class ColegioService : IColegioService
             Email = dto.Email,
             RolesId = dto.RolesId,
             PasswordHash = _passwordService.Hash(dto.Password),
-            ColegioId = colegio.Id // El ID ya fue asignado por AddAsync
+            ColegioId = colegio.Id
         };
         await _usuarioRepo.AddAsync(admin);
 
@@ -64,7 +64,7 @@ public class ColegioService : IColegioService
             Data = _mapper.Map<ColegioDTO>(colegio)
         };
     }
-    public async Task<ColegioDetailDTO?> GetByIdAsync(int id)
+    public async Task<ColegioDetailDTO?> GetByIdAsync(Guid id)
     {
         var colegio = await _colegioRepo.GetByIdAsync(id);
         if (colegio == null) return null;
@@ -72,38 +72,37 @@ public class ColegioService : IColegioService
         return _mapper.Map<ColegioDetailDTO>(colegio);
     }
 
-    public async Task<ApiResponseDTO<bool>> UpdateAsync(ColegioUpdateDTO dto)
+    public async Task<ApiResponseDTO<bool>> UpdateAsync(ColegioUpdateDTO dto, Guid usuarioId)
     {
         var colegio = await _colegioRepo.GetByIdAsync(dto.Id);
         if (colegio == null)
         {
-            return new ApiResponseDTO<bool>
-            {
-                Success = false,
-                Message = "Colegio no encontrado"
-            };
+            return new ApiResponseDTO<bool> { Success = false, Message = "Colegio no encontrado" };
         }
 
-        // Mapear cambios (excepto Representantes y Logo)
+        // 1. Mapear cambios del DTO al modelo existente
         _mapper.Map(dto, colegio);
 
-        // Guardar logo si hay uno nuevo
+        // 2. Asignar datos de auditoría manuales (BaseEntity)
+        colegio.UsuarioActualizacionId = usuarioId;
+        // La FechaActualizacion se puede asignar aquí o dejar que el DbContext lo haga
+        colegio.FechaActualizacion = DateTime.Now;
+
+        // 3. Procesar Logo si aplica
         if (dto.Logo != null)
             colegio.LogoPath = await _fileService.SaveAsync(dto.Logo);
 
-        // Actualizar representantes
+        // 4. Actualizar Colecciones (Representantes)
         colegio.RepresentantesLegales.Clear();
-        colegio.RepresentantesLegales = dto.RepresentantesLegales
-            .Select(r => _mapper.Map<RepresentanteLegal>(r))
-            .ToList();
+        foreach (var rDto in dto.RepresentantesLegales)
+        {
+            var representante = _mapper.Map<RepresentanteLegal>(rDto);
+            colegio.RepresentantesLegales.Add(representante);
+        }
 
+        // 5. Llamar al repositorio
         await _colegioRepo.UpdateAsync(colegio);
 
-        return new ApiResponseDTO<bool>
-        {
-            Success = true,
-            Message = "Colegio actualizado correctamente",
-            Data = true
-        };
+        return new ApiResponseDTO<bool> { Success = true, Message = "Actualización exitosa", Data = true };
     }
 }

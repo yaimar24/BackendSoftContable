@@ -19,7 +19,7 @@ namespace BackendSoftContable.Data.Repositories
             return colegio;
         }
 
-        public async Task<Colegio?> GetByIdAsync(int id)
+        public async Task<Colegio?> GetByIdAsync(Guid id)
         {
             return await _context.Colegios
                                  .Include(c => c.Usuarios)

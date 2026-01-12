@@ -2,7 +2,7 @@
 {
     public class ColegioDTO
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string NombreColegio { get; set; } = string.Empty;
         public string Nit { get; set; } = string.Empty;
         public string Direccion { get; set; } = string.Empty;

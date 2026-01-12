@@ -11,6 +11,6 @@ public class RepresentanteLegal
     public TipoIdentificacion TipoIdentificacion { get; set; } = null!;
 
     // 🔹 Relación con Colegio (Cada representante pertenece a un colegio)
-    public int ColegioId { get; set; }
+    public Guid ColegioId { get; set; }
     public Colegio Colegio { get; set; } = null!;
 }
