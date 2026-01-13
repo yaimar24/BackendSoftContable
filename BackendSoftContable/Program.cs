@@ -59,7 +59,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://76.13.26.131")
+        policy.WithOrigins("https://sicpie.com")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
