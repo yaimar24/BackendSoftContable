@@ -26,8 +26,4 @@
     <Folder Include="wwwroot\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include=".git\workflows\deploy.yml" />
-  </ItemGroup>
-
 </Project>
