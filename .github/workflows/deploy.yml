@@ -85,7 +85,10 @@ jobs:
         port: 22
 
         script: |
+           sudo systemctl stop BackendSoftContable
+           sudo systemctl daemon-reload
+           sudo systemctl start BackendSoftContable
+           sudo systemctl status BackendSoftContable
 
-          sudo systemctl restart BackendSoftContable
 
-          sudo systemctl status BackendSoftContable
+        
