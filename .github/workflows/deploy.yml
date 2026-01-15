@@ -46,8 +46,8 @@ jobs:
         username: ${{ secrets.VPS_USER }}
         key: ${{ secrets.VPS_KEY }}
         port: 22
-        source: "publish/*"
-        target: "/root/BackendSoftContable/bin/Release/net8.0/publish/"
+        source: "publish"
+        target: "/root/BackendSoftContable/bin/Release/net8.0/"
 
     - name: Restart Backend service
       uses: appleboy/ssh-action@v0.1.6
