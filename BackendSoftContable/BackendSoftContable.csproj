@@ -22,7 +22,6 @@
   <ItemGroup>
     <Folder Include="Interfaces\Repositories\" />
     <Folder Include="Migrations\" />
-    <Folder Include="NewFolder\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 

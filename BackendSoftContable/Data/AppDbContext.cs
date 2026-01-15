@@ -20,7 +20,9 @@ namespace BackendSoftContable.Data
         public DbSet<ActividadEconomica> ActividadEconomica { get; set; } = null!;
         public DbSet<Roles> Roles { get; set; } = null!;
         public DbSet<RepresentanteLegal> RepresentantesLegales { get; set; } = null!;
+        public DbSet<Puc> Puc { get; set; }
 
+        public DbSet<CuentaContable> CuentasContables { get; set; } = null!; 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -95,6 +97,28 @@ namespace BackendSoftContable.Data
                 .WithMany(c => c.RepresentantesLegales)
                 .HasForeignKey(r => r.ColegioId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+
+            modelBuilder.Entity<Puc>()
+                .Property(p => p.Naturaleza)
+                .IsFixedLength();
+
+            modelBuilder.Entity<CuentaContable>(entity =>
+            {
+                entity.ToTable("CuentasContables");
+
+                // El código se asigna manualmente, no es autoincremental
+                entity.HasKey(e => e.Codigo);
+                entity.Property(e => e.Codigo).HasMaxLength(20).IsRequired();
+
+                // Configuración de la jerarquía (Relación autorreferencial)
+                entity.HasOne(d => d.Padre)
+                    .WithMany(p => p.Hijos)
+                    .HasForeignKey(d => d.CodigoPadre)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(e => e.Naturaleza).IsFixedLength().HasMaxLength(1);
+            });
         }
     }
 }
