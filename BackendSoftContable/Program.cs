@@ -1,12 +1,18 @@
 ﻿using BackendSoftContable.Data;
 using BackendSoftContable.Data.Repositories;
 using BackendSoftContable.Mapping;
+using BackendSoftContable.Repositories.ITerceroRepositories;
+using BackendSoftContable.Repositories.ITercerosCategoria;
+using BackendSoftContable.Repositories.TerceroCategoriaRepository;
+using BackendSoftContable.Repositories.TerceroRepository;
 using BackendSoftContable.Services.Auth;
 using BackendSoftContable.Services.Colegio;
 using BackendSoftContable.Services.Storage;
+using BackendSoftContable.Services.TerceroService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,13 +28,50 @@ builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 // 🔹 Servicios
 builder.Services.AddScoped<IColegioService, ColegioService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<ITerceroService, TerceroService>();
+builder.Services.AddScoped<ITerceroRepository, TerceroRepository>();
+builder.Services.AddScoped<ITerceroCategoriaRepository, TerceroCategoriaRepository>();
+
 
 // 🔹 Controllers
 builder.Services.AddControllers();
 
 // 🔹 Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "BackendSoftContable API",
+        Version = "v1"
+    });
+
+    //  Configuración JWT para Swagger
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "Ingrese el token JWT en el formato: Bearer {tu_token}",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
 
 // 🔹 DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>

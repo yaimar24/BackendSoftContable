@@ -38,6 +38,12 @@ namespace BackendSoftContable.Controllers
 
             var tributos = await _context.Tributo
                 .Select(t => new { t.Id, t.Nombre }).ToListAsync();
+            var tiposPersona = await _context.TipoPersona
+                    .Select(t => new { t.Id, t.Nombre }).ToListAsync();
+
+            var categorias = await _context.Categorias
+                .Where(c => c.Activo)
+                .Select(c => new { c.Id, c.Nombre }).ToListAsync();
 
             return Ok(new RegistroParametrosDTO
             {
@@ -46,7 +52,9 @@ namespace BackendSoftContable.Controllers
                 ResponsabilidadesFiscales = responsabilidades,
                 TiposIdentificacion = tiposId,
                 Ciudades = ciudades,
-                Tributos = tributos
+                Tributos = tributos,
+                Categorias = categorias,
+                TiposPersona = tiposPersona
             });
         }
     }

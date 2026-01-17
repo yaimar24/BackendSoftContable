@@ -8,5 +8,8 @@
         public object TiposIdentificacion { get; set; } = null!;
         public object Ciudades { get; set; } = null!;
         public object Tributos { get; set; } = null!;
+
+        public object Categorias { get; set; } 
+        public object TiposPersona { get; set; }
     }
 }
