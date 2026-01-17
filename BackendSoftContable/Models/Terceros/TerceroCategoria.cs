@@ -23,7 +23,7 @@ namespace BackendSoftContable.Models
         public RegimenIva RegimenIva { get; set; } = null!;
 
         // Datos específicos del colegio
-        public string? Ciudad { get; set; }
+        public int CiudadId { get; set; }
         public string? Direccion { get; set; }
         public string? Telefono { get; set; }
 

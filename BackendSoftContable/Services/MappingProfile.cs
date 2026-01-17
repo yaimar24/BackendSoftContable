@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using BackendSoftContable.Models;
 using BackendSoftContable.DTOs.Colegio;
-using BackendSoftContable.DTOs.TerceroDetalleDTO;
 using BackendSoftContable.Models.Terceros;
+using BackendSoftContable.DTOs.Tercero;
 
 namespace BackendSoftContable.Mapping
 {

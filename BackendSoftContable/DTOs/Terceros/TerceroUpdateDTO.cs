@@ -2,15 +2,21 @@
 {
     public class TerceroUpdateDTO
     {
-        public int Id { get; set; } // ID de la tabla TerceroCategoria (la vinculación)
-        public string? Ciudad { get; set; }
-        public string? Direccion { get; set; }
-        public string? Telefono { get; set; }
-        public int RegimenIvaId { get; set; }
-        public bool Activo { get; set; }
+        public Guid Id { get; set; }
 
-        // Datos del tercero que podrían cambiar
-        public string Email { get; set; } = null!;
+        public int TipoPersonaId { get; set; }
+        public int TipoIdentificacionId { get; set; }
+
+        public string Identificacion { get; set; } = string.Empty;
+        public string? Dv { get; set; }
+
+        public string? Nombres { get; set; }
+        public string? Apellidos { get; set; }
         public string? NombreComercial { get; set; }
+
+        public string Email { get; set; } = string.Empty;
+
+        public List<int>? ResponsabilidadesFiscalesIds { get; set; }
     }
+
 }

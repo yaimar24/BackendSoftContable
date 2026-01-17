@@ -1,19 +1,24 @@
-﻿namespace BackendSoftContable.DTOs.TerceroDetalleDTO
+﻿namespace BackendSoftContable.DTOs.Tercero
 {
     public class TerceroDetalleDTO
     {
-        public Guid Id { get; set; } // ID del Tercero
-        public string TipoIdentificacionNombre { get; set; } = null!;
+        public Guid Id { get; set; }
         public string Identificacion { get; set; } = null!;
         public string? Dv { get; set; }
 
-        // Nombre procesado (Si es empresa NombreComercial, si no Nombres + Apellidos)
-        public string RazonSocial { get; set; } = null!;
+        // Esta es la propiedad que le falta a tu DTO:
+        public string TipoIdentificacionNombre { get; set; } = null!;
 
+        public string RazonSocial { get; set; } = null!;
         public string Email { get; set; } = null!;
-        public string Categoria { get; set; } = null!;
+        public string Telefono { get; set; } = null!;
+        public string Direccion { get; set; } = null!;
+
+        public string CategoriaNombre { get; set; } = null!;
         public string RegimenIvaNombre { get; set; } = null!;
-        public string? Telefono { get; set; }
         public bool Activo { get; set; }
+
+
+        public List<string> Responsabilidades { get; set; } = new List<string>();
     }
 }
