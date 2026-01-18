@@ -1,10 +1,9 @@
 ﻿using BackendSoftContable.DTOs;
 using BackendSoftContable.DTOs.Login;
-using BackendSoftContable.Services.Security;
 using BackendSoftContable.Data.Repositories;
 using BackendSoftContable.DTOs.Auditoria;
 using BackendSoftContable.Interfaces.Services;
-using Microsoft.Extensions.DependencyInjection;
+
 
 namespace BackendSoftContable.Services.Auth;
 
@@ -14,30 +13,31 @@ public class AuthService : IAuthService
     private readonly IPasswordService _passwordService;
     private readonly IJwtService _jwtService;
     private readonly IServiceScopeFactory _scopeFactory;
-
+    private readonly ILogger<AuthService> _logger; 
     public AuthService(
         IUsuarioRepository usuarioRepo,
         IPasswordService passwordService,
         IJwtService jwtService,
-        IServiceScopeFactory scopeFactory)
+        IServiceScopeFactory scopeFactory,
+        ILogger<AuthService> logger)
     {
         _usuarioRepo = usuarioRepo;
         _passwordService = passwordService;
         _jwtService = jwtService;
         _scopeFactory = scopeFactory;
+        _logger = logger;
     }
 
     public async Task<ApiResponseDTO<LoginResponseDTO>> LoginAsync(LoginDTO dto)
     {
         var usuario = await _usuarioRepo.GetByEmailAsync(dto.Email);
 
-        // Validación de credenciales
+        // 1. Validación de credenciales
         if (usuario == null || !_passwordService.Verify(usuario.PasswordHash, dto.Password))
         {
             if (usuario != null)
             {
-                // Si el error decía que no existe GetValueOrDefault(), 
-                // entonces pasamos el Id directamente porque no es nulo.
+                // Auditoría de intento fallido
                 AuditarLogin(usuario.Id, usuario.ColegioId, false, "Login fallido: Clave incorrecta");
             }
 
@@ -48,12 +48,13 @@ public class AuthService : IAuthService
             };
         }
 
+        // 2. Generación de Token
         var token = _jwtService.GenerateToken(
             usuario,
             usuario.Colegio?.NombreColegio ?? "SinColegio"
         );
 
-        // Auditoría de éxito
+        // 3. Auditoría de éxito
         AuditarLogin(usuario.Id, usuario.ColegioId, true, "Login exitoso");
 
         return new ApiResponseDTO<LoginResponseDTO>
@@ -70,6 +71,7 @@ public class AuthService : IAuthService
 
     private void AuditarLogin(Guid usuarioId, Guid colegioId, bool exitoso, string descripcion)
     {
+        // Preparamos los datos capturando los valores antes del Task.Run
         var entry = new AuditEntry
         {
             Accion = "LOGIN",
@@ -84,10 +86,9 @@ public class AuthService : IAuthService
         {
             UsuarioId = usuarioId,
             ColegioId = colegioId,
-            Endpoint = "/api/auth/login",
-            MetodoHttp = "POST"
         };
 
+        // Ejecución en segundo plano para no retrasar el Login al usuario
         _ = Task.Run(async () =>
         {
             try
@@ -98,7 +99,9 @@ public class AuthService : IAuthService
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error Auditoría: {ex.Message}");
+                // LOG DE PRODUCCIÓN: 
+                // Esto permite rastrear fallos en el visor de eventos o logs del servidor
+                _logger.LogError(ex, "Error crítico persistiendo auditoría de LOGIN para usuario {UsuarioId} en colegio {ColegioId}", usuarioId, colegioId);
             }
         });
     }
