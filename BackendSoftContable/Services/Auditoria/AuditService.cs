@@ -39,10 +39,13 @@ namespace BackendSoftContable.Services
             {
                 var httpContext = _httpContextAccessor.HttpContext;
 
-                // 1. Obtener la IP Pública real (Priorizando X-Forwarded-For si existe)
-                string ipAddress = GetClientIp(httpContext) ?? manualContext?.Ip ?? "0.0.0.0";
+                // --- LÓGICA DE IP ---
+                // Prioridad 1: IP manual (enviada desde el servicio)
+                // Prioridad 2: IP detectada por proxy (nube)
+                // Prioridad 3: IP de conexión directa
+                string ipFinal = manualContext?.Ip ?? GetClientIp(httpContext) ?? "0.0.0.0";
 
-                // 2. Extraer datos del Token o contexto manual
+                // --- LÓGICA DE IDENTIDAD ---
                 var user = httpContext?.User;
                 Guid userId = manualContext?.UsuarioId ?? GetGuidFromClaim(user, ClaimTypes.NameIdentifier) ?? GetGuidFromClaim(user, "sub") ?? Guid.Empty;
                 Guid colegioId = manualContext?.ColegioId ?? GetGuidFromClaim(user, "colegioId") ?? Guid.Empty;
@@ -53,20 +56,20 @@ namespace BackendSoftContable.Services
                     UsuarioId = userId,
                     ColegioId = colegioId,
 
-                    // Datos de la Petición
-                    MetodoHttp = httpContext?.Request.Method ?? manualContext?.MetodoHttp ?? "N/A",
-                    Endpoint = httpContext?.Request.Path.Value ?? manualContext?.Endpoint ?? "INTERNAL",
-                    Ip = ipAddress,
-                    UserAgent = httpContext?.Request.Headers["User-Agent"].ToString() ?? manualContext?.UserAgent ?? "System",
+                    // Datos técnicos: Preferimos manualContext si el HttpContext ya expiró en el hilo asíncrono
+                    MetodoHttp = manualContext?.MetodoHttp ?? httpContext?.Request.Method ?? "N/A",
+                    Endpoint = manualContext?.Endpoint ?? httpContext?.Request.Path.Value ?? "INTERNAL",
+                    Ip = ipFinal,
+                    UserAgent = manualContext?.UserAgent ?? httpContext?.Request.Headers["User-Agent"].ToString() ?? "System",
 
-                    // Datos del Negocio
+                    // Datos de negocio
                     Accion = entry.Accion ?? "OP",
                     Modulo = entry.Modulo ?? "GENERAL",
                     Entidad = entry.Entidad ?? "N/A",
                     Descripcion = entry.Descripcion,
                     DatosAntes = entry.DatosAntes != null ? JsonSerializer.Serialize(entry.DatosAntes, JsonOptions) : null,
                     DatosDespues = entry.DatosDespues != null ? JsonSerializer.Serialize(entry.DatosDespues, JsonOptions) : null,
-                    Exitoso = entry.Exitoso,
+                    Exitoso = entry.Exitoso, // Esto guardará 'false' si el login falló
                     FechaRegistro = DateTime.UtcNow
                 };
 
@@ -75,8 +78,8 @@ namespace BackendSoftContable.Services
             }
             catch (Exception ex)
             {
-                // En producción, esto se guarda en los logs del servidor (Docker, Azure, etc.)
-                _logger.LogError(ex, "Fallo crítico al intentar guardar log de auditoría.");
+                // Registro de error en producción
+                _logger.LogError(ex, "Error al persistir auditoría. Acción: {Accion}, Entidad: {Entidad}", entry.Accion, entry.Entidad);
             }
         }
 
@@ -93,17 +96,14 @@ namespace BackendSoftContable.Services
             }, context);
         }
 
-        // Helper para extraer la IP real en la nube
         private string? GetClientIp(HttpContext? context)
         {
             if (context == null) return null;
 
-            // X-Forwarded-For es la cabecera estándar que usan los Proxies (Nginx, Azure, AWS)
+            // Revisamos cabecera de la nube/proxy primero
             var forwardedHeader = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-
             if (!string.IsNullOrEmpty(forwardedHeader))
             {
-                // Puede venir una lista de IPs (cliente, proxy1, proxy2). Tomamos la primera.
                 return forwardedHeader.Split(',')[0].Trim();
             }
 
