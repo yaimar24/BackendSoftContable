@@ -18,7 +18,7 @@
         public string Email { get; set; }
         public string Telefono { get; set; }
         public string Direccion { get; set; }
-        public int CiudadId { get; set; }
+        public int? CiudadId { get; set; }
 
         // INFORMACIÓN FISCAL
         public string? Indicativo { get; set; }

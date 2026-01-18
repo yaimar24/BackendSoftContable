@@ -65,10 +65,10 @@ namespace BackendSoftContable.Services.TerceroService
 
                 // Vinculación con colegio/categoría
                 var existeVinculo = await _context.TerceroCategoria
-                    .AnyAsync(tc => tc.TerceroId == tercero.Id && tc.ColegioId == dto.ColegioId && tc.CategoriaId == dto.CategoriaId);
+                .AnyAsync(tc => tc.TerceroId == tercero.Id && tc.ColegioId == dto.ColegioId && tc.CategoriaId == dto.CategoriaId);
 
                 if (existeVinculo)
-                    return new ApiResponseDTO<Guid> { Success = false, Message = "El tercero ya tiene esta categoría en el colegio." };
+                    return new ApiResponseDTO<Guid> { Success = false, Message = "Tercero existente con esa misma categoria e identificación" };
 
                 var vinculacion = _mapper.Map<TerceroCategoria>(dto);
                 vinculacion.TerceroId = tercero.Id;
@@ -103,6 +103,7 @@ namespace BackendSoftContable.Services.TerceroService
 
             try
             {
+                // 1️⃣ Cargar el tercero con responsabilidades e información fiscal
                 var tercero = await _context.Tercero
                     .Include(t => t.Responsabilidades)
                     .Include(t => t.InformacionFiscal)
@@ -111,19 +112,47 @@ namespace BackendSoftContable.Services.TerceroService
                 if (tercero == null)
                     return ApiResponseDTO<Guid>.Fail("El tercero no existe.");
 
-                // Vinculación específica
+                // 2️⃣ Cargar la vinculación específica con Colegio y Categoría
                 var vinculacion = await _context.TerceroCategoria
-                    .FirstOrDefaultAsync(tc => tc.TerceroId == dto.Id && tc.ColegioId == dto.ColegioId);
+                    .FirstOrDefaultAsync(tc => tc.TerceroId == dto.Id && tc.ColegioId == dto.ColegioId && tc.CategoriaId == dto.CategoriaId);
 
                 if (vinculacion == null)
-                    return ApiResponseDTO<Guid>.Fail("No se encontró la vinculación con el colegio.");
+                    return ApiResponseDTO<Guid>.Fail("No se encontró la vinculación con el colegio y categoría.");
 
-                // Mapear cambios usando AutoMapper
-                _mapper.Map(dto, tercero);          // Datos globales
-                _mapper.Map(dto, tercero.InformacionFiscal); // Datos fiscales
-                _mapper.Map(dto, vinculacion);      // Datos por colegio
+                // 3️⃣ Verificar duplicados solo en otras filas
+                var existeDuplicado = await _context.TerceroCategoria
+                    .Include(tc => tc.Tercero)
+                    .AnyAsync(tc =>
+                        tc.ColegioId == dto.ColegioId &&
+                        tc.CategoriaId == dto.CategoriaId &&
+                        tc.Tercero.Identificacion == dto.Identificacion &&
+                        tc.Id != vinculacion.Id && // Excluir la fila que se está actualizando
+                        tc.Activo);
 
-                // Actualizar responsabilidades
+                if (existeDuplicado)
+                    return ApiResponseDTO<Guid>.Fail("Ya existe un tercero con esa identificación en este colegio y categoría.");
+
+                // 4️⃣ Actualizar datos globales del tercero
+                tercero.TipoPersonaId = dto.TipoPersonaId;
+                tercero.TipoIdentificacionId = dto.TipoIdentificacionId;
+                tercero.Identificacion = dto.Identificacion;
+                tercero.Dv = dto.Dv;
+                tercero.Nombres = dto.Nombres;
+                tercero.Apellidos = dto.Apellidos;
+                tercero.NombreComercial = dto.NombreComercial;
+                tercero.Email = dto.Email;
+                tercero.Activo = dto.Activo;
+
+                // 5️⃣ Actualizar información fiscal
+                _mapper.Map(dto, tercero.InformacionFiscal);
+
+                // 6️⃣ Actualizar datos de la vinculación (TerceroCategoria)
+                vinculacion.RegimenIvaId = dto.RegimenIvaId;
+                vinculacion.Direccion = dto.Direccion;
+                vinculacion.Telefono = dto.Telefono;
+                vinculacion.Activo = dto.Activo;
+
+                // 7️⃣ Actualizar responsabilidades fiscales
                 if (tercero.Responsabilidades?.Any() == true)
                     _context.TerceroResponsabilidad.RemoveRange(tercero.Responsabilidades);
 
@@ -139,6 +168,7 @@ namespace BackendSoftContable.Services.TerceroService
                         }).ToList();
                 }
 
+                // 8️⃣ Guardar cambios
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
@@ -147,9 +177,10 @@ namespace BackendSoftContable.Services.TerceroService
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return ApiResponseDTO<Guid>.Fail(ex.Message);
+                return ApiResponseDTO<Guid>.Fail($"Error al actualizar: {ex.Message}");
             }
         }
+
 
         // -------------------------------
         // Obtener todos los terceros por colegio
@@ -158,6 +189,8 @@ namespace BackendSoftContable.Services.TerceroService
         {
             try
             {
+
+
                 var tercerosCategorias = await _context.TerceroCategoria
                     .Where(tc => tc.ColegioId == colegioId)
                     .Include(tc => tc.Tercero)
@@ -192,20 +225,26 @@ namespace BackendSoftContable.Services.TerceroService
                 if (vinculacion == null)
                     return ApiResponseDTO<Guid>.Fail("No se encontró la vinculación con este colegio.");
 
-                // Marcar como inactivo
-                vinculacion.Activo = false;
-                //vinculacion.UsuarioModificacionId = usuarioId;
-                //vinculacion.FechaModificacion = DateTime.Now;
+                // Alternar el valor de Activo
+                vinculacion.Activo = !vinculacion.Activo;
+
+                // Opcional: actualizar info de modificación
+                // vinculacion.UsuarioModificacionId = usuarioId;
+                // vinculacion.FechaModificacion = DateTime.Now;
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return ApiResponseDTO<Guid>.SuccessResponse(terceroId, "Tercero desvinculado correctamente.");
+                string mensaje = vinculacion.Activo ?
+                    "Tercero vinculado correctamente." :
+                    "Tercero desvinculado correctamente.";
+
+                return ApiResponseDTO<Guid>.SuccessResponse(terceroId, mensaje);
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return ApiResponseDTO<Guid>.Fail($"Error al desvincular el tercero: {ex.Message}");
+                return ApiResponseDTO<Guid>.Fail($"Error al actualizar la vinculación: {ex.Message}");
             }
         }
 
