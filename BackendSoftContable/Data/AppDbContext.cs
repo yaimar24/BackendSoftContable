@@ -30,6 +30,7 @@ namespace BackendSoftContable.Data
         public DbSet<TerceroInformacionFiscal> TerceroInformacionFiscal { get; set; } = null!;
         public DbSet<TerceroResponsabilidad> TerceroResponsabilidad { get; set; } = null!;
         public DbSet<Categoria> Categorias { get; set; } = null!;
+        public DbSet<AuditoriaLog> AuditoriaLog { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -192,4 +193,5 @@ namespace BackendSoftContable.Data
 
         }
     }
+
 }

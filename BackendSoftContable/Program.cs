@@ -1,10 +1,13 @@
 ﻿using BackendSoftContable.Data;
 using BackendSoftContable.Data.Repositories;
+using BackendSoftContable.Interfaces.Services;
 using BackendSoftContable.Mapping;
+using BackendSoftContable.Middleware;
 using BackendSoftContable.Repositories.ITerceroRepositories;
 using BackendSoftContable.Repositories.ITercerosCategoria;
 using BackendSoftContable.Repositories.TerceroCategoriaRepository;
 using BackendSoftContable.Repositories.TerceroRepository;
+using BackendSoftContable.Services;
 using BackendSoftContable.Services.Auth;
 using BackendSoftContable.Services.Colegio;
 using BackendSoftContable.Services.Storage;
@@ -17,6 +20,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAutoMapper(typeof(MappingProfile));
+builder.Services.AddHttpContextAccessor();
 
 // 🔹 Repositorios
 builder.Services.AddScoped<IColegioRepository, ColegioRepository>();
@@ -31,6 +35,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ITerceroService, TerceroService>();
 builder.Services.AddScoped<ITerceroRepository, TerceroRepository>();
 builder.Services.AddScoped<ITerceroCategoriaRepository, TerceroCategoriaRepository>();
+builder.Services.AddScoped<IAuditService, AuditService>();
 
 
 // 🔹 Controllers
@@ -120,6 +125,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("AllowFrontend");
+app.UseMiddleware<AuditAndErrorMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
