@@ -175,5 +175,39 @@ namespace BackendSoftContable.Services.TerceroService
                 return ApiResponseDTO<IEnumerable<TerceroEditDTO>>.Fail($"Error al obtener terceros: {ex.Message}");
             }
         }
+
+        // -------------------------------
+        // Desvincular tercero
+        // -------------------------------
+        public async Task<ApiResponseDTO<Guid>> DesvincularTerceroAsync(Guid terceroId, Guid colegioId, Guid usuarioId)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                // Buscar la vinculación específica
+                var vinculacion = await _context.TerceroCategoria
+                    .FirstOrDefaultAsync(tc => tc.TerceroId == terceroId && tc.ColegioId == colegioId);
+
+                if (vinculacion == null)
+                    return ApiResponseDTO<Guid>.Fail("No se encontró la vinculación con este colegio.");
+
+                // Marcar como inactivo
+                vinculacion.Activo = false;
+                //vinculacion.UsuarioModificacionId = usuarioId;
+                //vinculacion.FechaModificacion = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return ApiResponseDTO<Guid>.SuccessResponse(terceroId, "Tercero desvinculado correctamente.");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return ApiResponseDTO<Guid>.Fail($"Error al desvincular el tercero: {ex.Message}");
+            }
+        }
+
     }
 }

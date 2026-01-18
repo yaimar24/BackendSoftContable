@@ -14,4 +14,7 @@ public interface ITerceroService
     // Obtener todos los terceros de un colegio
     Task<ApiResponseDTO<IEnumerable<TerceroEditDTO>>> ObtenerTodosPorColegio(Guid colegioId);
 
+    Task<ApiResponseDTO<Guid>> DesvincularTerceroAsync(Guid terceroId, Guid colegioId, Guid usuarioId);
+
+
 }

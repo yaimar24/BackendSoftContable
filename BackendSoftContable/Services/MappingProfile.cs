@@ -67,6 +67,7 @@ namespace BackendSoftContable.Mapping
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Tercero.Email))
                 .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Telefono))
                 .ForMember(dest => dest.Direccion, opt => opt.MapFrom(src => src.Direccion))
+                .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.Activo))
                 .ForMember(dest => dest.CiudadId, opt => opt.MapFrom(src => src.CiudadId))
                 .ForMember(dest => dest.Indicativo, opt => opt.MapFrom(src => src.Tercero.InformacionFiscal.Indicativo))
                 .ForMember(dest => dest.CodigoPostal, opt => opt.MapFrom(src => src.Tercero.InformacionFiscal.CodigoPostal))

@@ -31,6 +31,7 @@
         public Guid ColegioId { get; set; }
         public int CategoriaId { get; set; }
         public int RegimenIvaId { get; set; }
+        public bool Activo { get; set; } 
 
         // RESPONSABILIDADES
         public List<int> ResponsabilidadesFiscalesIds { get; set; } = new();

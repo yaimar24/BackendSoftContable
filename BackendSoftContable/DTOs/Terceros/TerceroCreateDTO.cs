@@ -27,6 +27,9 @@
     public int CategoriaId { get; set; }
     public int RegimenIvaId { get; set; }
 
+    public bool Activo { get; set; }
+
+
     // --- RESPONSABILIDADES FISCALES (Checkboxes) ---
     // Recibimos la lista de IDs de la tabla ResponsabilidadFiscal
     public List<int> ResponsabilidadesFiscalesIds { get; set; } = new List<int>();

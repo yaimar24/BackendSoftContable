@@ -34,6 +34,8 @@ namespace BackendSoftContable.Models.Terceros
         public string Email { get; set; } = string.Empty;
 
         // --- PROPIEDADES DE NAVEGACIÓN (CONEXIONES) ---
+        // --- ESTADO DEL TERCERO ---
+        public bool Activo { get; set; } = true;
 
         // 1. Relación 1 a 1 con Información Fiscal (Facturación)
         public virtual TerceroInformacionFiscal InformacionFiscal { get; set; } = null!;

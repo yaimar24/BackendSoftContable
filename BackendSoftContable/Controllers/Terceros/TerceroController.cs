@@ -117,5 +117,33 @@ namespace BackendSoftContable.Controllers
 
             return BadRequest(response);
         }
+
+        [Authorize]
+        [HttpPut("desvincular/{terceroId:guid}")]
+        public async Task<IActionResult> DesvincularTercero(Guid terceroId)
+        {
+            // Obtener el colegio del claim del JWT
+            var colegioIdClaim = User.FindFirst("colegioId")?.Value;
+            if (string.IsNullOrEmpty(colegioIdClaim))
+                return Unauthorized(new { Success = false, Message = "El token no contiene la información del colegio" });
+
+            var colegioId = Guid.Parse(colegioIdClaim);
+
+            // Obtener el usuarioId del JWT
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                             ?? User.FindFirst("sub")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid usuarioId))
+            {
+                return Unauthorized(new { Success = false, Message = "Token de usuario inválido o expirado" });
+            }
+
+            // Llamamos al servicio para marcar como inactivo
+            var response = await _service.DesvincularTerceroAsync(terceroId, colegioId, usuarioId);
+
+            return response.Success ? Ok(response) : BadRequest(response);
+        }
+
+
     }
+
 }
