@@ -27,7 +27,7 @@
     public int CategoriaId { get; set; }
     public int RegimenIvaId { get; set; }
 
-    public bool Activo { get; set; }
+    public bool Activo { get; set; } = true;
 
 
     // --- RESPONSABILIDADES FISCALES (Checkboxes) ---
