@@ -126,7 +126,11 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowFrontend");
 app.UseMiddleware<AuditAndErrorMiddleware>();
-
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor |
+                       Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+});
 app.UseAuthentication();
 app.UseAuthorization();
 

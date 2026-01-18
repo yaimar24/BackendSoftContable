@@ -3,6 +3,7 @@ using BackendSoftContable.DTOs.Auditoria;
 using BackendSoftContable.Interfaces.Services;
 using BackendSoftContable.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -13,6 +14,7 @@ namespace BackendSoftContable.Services
     {
         private readonly AppDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ILogger<AuditService> _logger;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -21,10 +23,14 @@ namespace BackendSoftContable.Services
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
 
-        public AuditService(AppDbContext context, IHttpContextAccessor httpContextAccessor)
+        public AuditService(
+            AppDbContext context,
+            IHttpContextAccessor httpContextAccessor,
+            ILogger<AuditService> logger)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
         }
 
         public async Task LogAsync(AuditEntry entry, AuditContext? manualContext = null)
@@ -33,24 +39,27 @@ namespace BackendSoftContable.Services
             {
                 var httpContext = _httpContextAccessor.HttpContext;
 
-                // 1. Extraer datos del Token si no vienen manuales
+                // 1. Obtener la IP Pública real (Priorizando X-Forwarded-For si existe)
+                string ipAddress = GetClientIp(httpContext) ?? manualContext?.Ip ?? "0.0.0.0";
+
+                // 2. Extraer datos del Token o contexto manual
                 var user = httpContext?.User;
-                Guid? userId = manualContext?.UsuarioId ?? GetGuidFromClaim(user, ClaimTypes.NameIdentifier) ?? GetGuidFromClaim(user, "sub");
-                Guid? colId = manualContext?.ColegioId ?? GetGuidFromClaim(user, "colegioId");
+                Guid userId = manualContext?.UsuarioId ?? GetGuidFromClaim(user, ClaimTypes.NameIdentifier) ?? GetGuidFromClaim(user, "sub") ?? Guid.Empty;
+                Guid colegioId = manualContext?.ColegioId ?? GetGuidFromClaim(user, "colegioId") ?? Guid.Empty;
 
                 var log = new AuditoriaLog
                 {
                     Id = Guid.NewGuid(),
-                    UsuarioId = userId ?? Guid.Empty,
-                    ColegioId = colId ?? Guid.Empty,
+                    UsuarioId = userId,
+                    ColegioId = colegioId,
 
-                    // 2. Datos de la Petición (Automáticos)
+                    // Datos de la Petición
                     MetodoHttp = httpContext?.Request.Method ?? manualContext?.MetodoHttp ?? "N/A",
-                    Endpoint = httpContext?.Request.Path ?? manualContext?.Endpoint ?? "INTERNAL",
-                    Ip = httpContext?.Connection.RemoteIpAddress?.ToString() ?? manualContext?.Ip ?? "0.0.0.0",
-                    UserAgent = httpContext?.Request.Headers["User-Agent"] ?? manualContext?.UserAgent ?? "System",
+                    Endpoint = httpContext?.Request.Path.Value ?? manualContext?.Endpoint ?? "INTERNAL",
+                    Ip = ipAddress,
+                    UserAgent = httpContext?.Request.Headers["User-Agent"].ToString() ?? manualContext?.UserAgent ?? "System",
 
-                    // 3. Datos del Negocio (Vienen del Entry)
+                    // Datos del Negocio
                     Accion = entry.Accion ?? "OP",
                     Modulo = entry.Modulo ?? "GENERAL",
                     Entidad = entry.Entidad ?? "N/A",
@@ -66,20 +75,39 @@ namespace BackendSoftContable.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error Auditoría: {ex.Message}");
+                // En producción, esto se guarda en los logs del servidor (Docker, Azure, etc.)
+                _logger.LogError(ex, "Fallo crítico al intentar guardar log de auditoría.");
             }
         }
 
         public async Task LogErrorAsync(Exception ex, AuditContext context)
         {
-            // Similar al LogAsync pero enfocado en el error
             await LogAsync(new AuditEntry
             {
                 Accion = "ERROR",
+                Modulo = "SISTEMA",
+                Entidad = "EXCEPTION",
                 Descripcion = ex.Message,
                 Exitoso = false,
-                Entidad = "EXCEPTION"
+                DatosDespues = new { StackTrace = ex.StackTrace }
             }, context);
+        }
+
+        // Helper para extraer la IP real en la nube
+        private string? GetClientIp(HttpContext? context)
+        {
+            if (context == null) return null;
+
+            // X-Forwarded-For es la cabecera estándar que usan los Proxies (Nginx, Azure, AWS)
+            var forwardedHeader = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+
+            if (!string.IsNullOrEmpty(forwardedHeader))
+            {
+                // Puede venir una lista de IPs (cliente, proxy1, proxy2). Tomamos la primera.
+                return forwardedHeader.Split(',')[0].Trim();
+            }
+
+            return context.Connection.RemoteIpAddress?.ToString();
         }
 
         private Guid? GetGuidFromClaim(ClaimsPrincipal? user, string claimType)
