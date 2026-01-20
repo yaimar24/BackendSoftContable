@@ -1,9 +1,9 @@
 ﻿using BackendSoftContable.DTOs;
 using BackendSoftContable.DTOs.Login;
-using BackendSoftContable.Data.Repositories;
 using BackendSoftContable.DTOs.Auditoria;
+using BackendSoftContable.Data.Repositories;
 using BackendSoftContable.Interfaces.Services;
-
+using Microsoft.Extensions.Logging;
 
 namespace BackendSoftContable.Services.Auth;
 
@@ -12,19 +12,20 @@ public class AuthService : IAuthService
     private readonly IUsuarioRepository _usuarioRepo;
     private readonly IPasswordService _passwordService;
     private readonly IJwtService _jwtService;
-    private readonly IServiceScopeFactory _scopeFactory;
-    private readonly ILogger<AuthService> _logger; 
+    private readonly IAuditService _auditService;
+    private readonly ILogger<AuthService> _logger;
+
     public AuthService(
         IUsuarioRepository usuarioRepo,
         IPasswordService passwordService,
         IJwtService jwtService,
-        IServiceScopeFactory scopeFactory,
+        IAuditService auditService,
         ILogger<AuthService> logger)
     {
         _usuarioRepo = usuarioRepo;
         _passwordService = passwordService;
         _jwtService = jwtService;
-        _scopeFactory = scopeFactory;
+        _auditService = auditService;
         _logger = logger;
     }
 
@@ -32,13 +33,17 @@ public class AuthService : IAuthService
     {
         var usuario = await _usuarioRepo.GetByEmailAsync(dto.Email);
 
-        // 1. Validación de credenciales
+        // 1️⃣ Validación de credenciales
         if (usuario == null || !_passwordService.Verify(usuario.PasswordHash, dto.Password))
         {
             if (usuario != null)
             {
-                // Auditoría de intento fallido
-                AuditarLogin(usuario.Id, usuario.ColegioId, false, "Login fallido: Clave incorrecta");
+                await SafeAuditAsync(
+                    usuario.Id,
+                    usuario.ColegioId,
+                    false,
+                    "Login fallido: Clave incorrecta"
+                );
             }
 
             return new ApiResponseDTO<LoginResponseDTO>
@@ -48,14 +53,19 @@ public class AuthService : IAuthService
             };
         }
 
-        // 2. Generación de Token
+        // 2️⃣ Generar JWT
         var token = _jwtService.GenerateToken(
             usuario,
             usuario.Colegio?.NombreColegio ?? "SinColegio"
         );
 
-        // 3. Auditoría de éxito
-        AuditarLogin(usuario.Id, usuario.ColegioId, true, "Login exitoso");
+        // 3️⃣ Auditoría de éxito
+        await SafeAuditAsync(
+            usuario.Id,
+            usuario.ColegioId,
+            true,
+            "Login exitoso"
+        );
 
         return new ApiResponseDTO<LoginResponseDTO>
         {
@@ -69,40 +79,44 @@ public class AuthService : IAuthService
         };
     }
 
-    private void AuditarLogin(Guid usuarioId, Guid colegioId, bool exitoso, string descripcion)
+    /// <summary>
+    /// Ejecuta la auditoría de forma segura sin romper el flujo principal
+    /// </summary>
+    private async Task SafeAuditAsync(
+        Guid usuarioId,
+        Guid colegioId,
+        bool exitoso,
+        string descripcion)
     {
-        // Preparamos los datos capturando los valores antes del Task.Run
-        var entry = new AuditEntry
+        try
         {
-            Accion = "LOGIN",
-            Modulo = "Seguridad",
-            Entidad = "Usuario",
-            Descripcion = descripcion,
-            DatosDespues = new { Resultado = exitoso ? "Exitoso" : "Fallido" },
-            Exitoso = exitoso
-        };
-
-        var ctx = new AuditContext
-        {
-            UsuarioId = usuarioId,
-            ColegioId = colegioId,
-        };
-
-        // Ejecución en segundo plano para no retrasar el Login al usuario
-        _ = Task.Run(async () =>
-        {
-            try
+            var entry = new AuditEntry
             {
-                using var scope = _scopeFactory.CreateScope();
-                var auditService = scope.ServiceProvider.GetRequiredService<IAuditService>();
-                await auditService.LogAsync(entry, ctx);
-            }
-            catch (Exception ex)
+                Accion = "LOGIN",
+                Modulo = "Seguridad",
+                Entidad = "Usuario",
+                Descripcion = descripcion,
+                DatosDespues = new { Resultado = exitoso ? "Exitoso" : "Fallido" },
+                Exitoso = exitoso
+            };
+
+            var ctx = new AuditContext
             {
-                // LOG DE PRODUCCIÓN: 
-                // Esto permite rastrear fallos en el visor de eventos o logs del servidor
-                _logger.LogError(ex, "Error crítico persistiendo auditoría de LOGIN para usuario {UsuarioId} en colegio {ColegioId}", usuarioId, colegioId);
-            }
-        });
+                UsuarioId = usuarioId,
+                ColegioId = colegioId
+            };
+
+            await _auditService.LogAsync(entry, ctx);
+        }
+        catch (Exception ex)
+        {
+            // Nunca rompe el login
+            _logger.LogError(
+                ex,
+                "Error persistiendo auditoría LOGIN. Usuario {UsuarioId}, Colegio {ColegioId}",
+                usuarioId,
+                colegioId
+            );
+        }
     }
 }

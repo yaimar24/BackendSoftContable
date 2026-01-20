@@ -3,7 +3,6 @@ using BackendSoftContable.Data.Repositories;
 using BackendSoftContable.Interfaces.Services;
 using BackendSoftContable.Mapping;
 using BackendSoftContable.Middleware;
-using BackendSoftContable.Repositories.ITerceroRepositories;
 using BackendSoftContable.Repositories.ITercerosCategoria;
 using BackendSoftContable.Repositories.TerceroCategoriaRepository;
 using BackendSoftContable.Repositories.TerceroRepository;
