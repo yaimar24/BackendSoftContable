@@ -4,6 +4,7 @@ using BackendSoftContable.DTOs.Colegio;
 using BackendSoftContable.Models.Terceros;
 using BackendSoftContable.DTOs.Tercero;
 using BackendSoftContable.DTOs.Terceros;
+using BackendSoftContable.DTOs.Puc;
 
 namespace BackendSoftContable.Mapping
 {
@@ -32,6 +33,16 @@ namespace BackendSoftContable.Mapping
                 .ForMember(dest => dest.Colegio, opt => opt.Ignore())
                 .ReverseMap();
 
+
+            // Mapeo para el árbol (GET)
+            // Usamos ReverseMap por si en algún momento necesitas el camino contrario
+            CreateMap<Puc, PucNodoDTO>()
+                .ForMember(dest => dest.Hijos, opt => opt.MapFrom(src => src.Hijos));
+
+            // Mapeo para la creación (POST)
+            CreateMap<PucCreateDTO, Puc>()
+                .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre.ToUpper().Trim()))
+                .ForMember(dest => dest.Codigo, opt => opt.MapFrom(src => src.Codigo.Trim()));
             // -------------------------------
             // Tercero
             // -------------------------------

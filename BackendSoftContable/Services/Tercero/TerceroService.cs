@@ -261,7 +261,6 @@ public class TerceroService : ITerceroService
             ? new { t!.Id, t.Nombres, t.Identificacion }
             : null;
 
-    // ========================= AUDITORÍA CORRECTA =========================
 
     private async Task AuditarAsync(
         AuditAccion accion,

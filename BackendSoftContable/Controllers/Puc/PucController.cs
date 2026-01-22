@@ -1,63 +1,39 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using BackendSoftContable.Data;
-using BackendSoftContable.DTOs.Puc;
+﻿using BackendSoftContable.DTOs.Puc;
+using BackendSoftContable.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
-namespace BackendSoftContable.Controllers
+[Authorize]
+[Route("api/[controller]")]
+[ApiController]
+public class PucController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class PucController : ControllerBase
+    private readonly IPucService _pucService;
+
+    public PucController(IPucService pucService)
     {
-        private readonly AppDbContext _context;
+        _pucService = pucService;
+    }
 
-        public PucController(AppDbContext context)
-        {
-            _context = context;
-        }
+    [HttpGet("tree")]
+    public async Task<IActionResult> GetTree()
+    {
+        var colegioId = Guid.Parse(User.FindFirst("colegioId")?.Value!);
+        var result = await _pucService.GetTreeAsync(colegioId);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
 
-        [HttpGet("tree")]
-        public async Task<IActionResult> GetTree()
-        {
-            // 1. Traemos todos los datos planos (o solo los activos)
-            var todasLasCuentas = await _context.Puc
-            .OrderBy(c => c.Codigo)
-                .Select(c => new PucNodoDTO
-                {
-                    Codigo = c.Codigo,
-                    Nombre = c.Nombre,
-                    Nivel = c.Nivel,
-                    EsDetalle = c.EsDetalle,
-                    Naturaleza = c.Naturaleza,
-                    // El CodigoPadre lo necesitamos temporalmente para armar el árbol
-                    // pero no es necesario enviarlo al front si el objeto ya está anidado
-                })
-                .ToListAsync();
+    [Authorize]
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] PucCreateDTO dto)
+    {
+        var colegioId = Guid.Parse(User.FindFirst("colegioId")?.Value!);
+        var usuarioId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
 
-            // 2. Traemos también la relación plana para poder armar el árbol en memoria
-            var listaPlana = await _context.Puc.ToListAsync();
+        var result = await _pucService.CreateAccountAsync(dto, colegioId, usuarioId);
 
-            // 3. Diccionario para búsqueda rápida y armado del árbol
-            var diccionario = todasLasCuentas.ToDictionary(c => c.Codigo);
-            var nodosRaiz = new List<PucNodoDTO>();
-
-            foreach (var cuentaDb in listaPlana)
-            {
-                var nodoActual = diccionario[cuentaDb.Codigo];
-
-                if (string.IsNullOrEmpty(cuentaDb.CodigoPadre))
-                {
-                    // Es una Clase (Nivel 1), va a la raíz
-                    nodosRaiz.Add(nodoActual);
-                }
-                else if (diccionario.ContainsKey(cuentaDb.CodigoPadre))
-                {
-                    // Buscamos al padre en el diccionario y le añadimos este hijo
-                    diccionario[cuentaDb.CodigoPadre].Hijos.Add(nodoActual);
-                }
-            }
-
-            return Ok(nodosRaiz);
-        }
+        if (result.Success) return Ok(result);
+        return BadRequest(result);
     }
 }

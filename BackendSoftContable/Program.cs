@@ -35,6 +35,7 @@ builder.Services.AddScoped<ITerceroService, TerceroService>();
 builder.Services.AddScoped<ITerceroRepository, TerceroRepository>();
 builder.Services.AddScoped<ITerceroCategoriaRepository, TerceroCategoriaRepository>();
 builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<IPucService, PucService>();
 
 
 // 🔹 Controllers

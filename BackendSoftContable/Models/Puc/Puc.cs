@@ -3,16 +3,19 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BackendSoftContable.Models
 {
-    [Table("Puc")] // Nombre exacto de la tabla en SQL
+    [Table("Puc")]
     public class Puc
     {
-        [Key] // Define Codigo como Primary Key
+        // La PK se define en AppDbContext como { Codigo, ColegioId }
         [StringLength(20)]
-        public string Codigo { get; set; }
+        public string Codigo { get; set; } = string.Empty;
+
+        // Guid.Empty (0000...) significa cuenta global del sistema
+        public Guid ColegioId { get; set; } = Guid.Empty;
 
         [Required]
         [StringLength(255)]
-        public string Nombre { get; set; }
+        public string Nombre { get; set; } = string.Empty;
 
         [Required]
         public int Nivel { get; set; }
@@ -22,7 +25,7 @@ namespace BackendSoftContable.Models
 
         [Required]
         [Column(TypeName = "char(1)")]
-        public string Naturaleza { get; set; } // 'D' o 'C'
+        public string Naturaleza { get; set; } = "D"; // 'D' o 'C'
 
         [Required]
         public bool EsDetalle { get; set; }
@@ -31,11 +34,13 @@ namespace BackendSoftContable.Models
 
         public DateTime FechaCreacion { get; set; } = DateTime.Now;
 
-        // --- RELACIÓN AUTORREFERENCIAL (OPCIONAL pero recomendada) ---
+        // --- RELACIONES ---
 
-        [ForeignKey("CodigoPadre")]
+        [ForeignKey("ColegioId")]
+        public virtual Colegio? Colegio { get; set; }
+
+        // Relación jerárquica corregida para Llave Compuesta
         public virtual Puc? Padre { get; set; }
-
         public virtual ICollection<Puc> Hijos { get; set; } = new List<Puc>();
     }
 }

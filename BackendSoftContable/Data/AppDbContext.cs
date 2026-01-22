@@ -23,7 +23,6 @@ namespace BackendSoftContable.Data
         public DbSet<RepresentanteLegal> RepresentantesLegales { get; set; } = null!;
         public DbSet<Puc> Puc { get; set; }
 
-        public DbSet<CuentaContable> CuentasContables { get; set; } = null!; 
         public DbSet<TipoPersona> TipoPersona { get; set; } = null!;
         public DbSet<Tercero> Tercero { get; set; } = null!;
         public DbSet<TerceroCategoria> TerceroCategoria { get; set; } = null!;
@@ -112,22 +111,6 @@ namespace BackendSoftContable.Data
                 .Property(p => p.Naturaleza)
                 .IsFixedLength();
 
-            modelBuilder.Entity<CuentaContable>(entity =>
-            {
-                entity.ToTable("CuentasContables");
-
-                // El código se asigna manualmente, no es autoincremental
-                entity.HasKey(e => e.Codigo);
-                entity.Property(e => e.Codigo).HasMaxLength(20).IsRequired();
-
-                // Configuración de la jerarquía (Relación autorreferencial)
-                entity.HasOne(d => d.Padre)
-                    .WithMany(p => p.Hijos)
-                    .HasForeignKey(d => d.CodigoPadre)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.Property(e => e.Naturaleza).IsFixedLength().HasMaxLength(1);
-            });
 
             // --- CONFIGURACIÓN DE TERCEROS ---
 
@@ -191,7 +174,43 @@ namespace BackendSoftContable.Data
             modelBuilder.Entity<TerceroResponsabilidad>()
                 .HasKey(tr => new { tr.TerceroId, tr.ResponsabilidadFiscalId });
 
+            //PUC 
+
+            modelBuilder.Entity<Puc>(entity =>
+            {
+                entity.ToTable("Puc");
+
+                // 1. Definir Llave Compuesta: Codigo + ColegioId
+                // Esto permite que el Codigo '1105' exista para ColegioId NULL 
+                // y también para un ColegioId específico.
+                entity.HasKey(p => new { p.Codigo, p.ColegioId });
+
+                entity.Property(p => p.Codigo).HasMaxLength(20);
+
+                entity.Property(p => p.Naturaleza)
+                    .IsFixedLength()
+                    .HasMaxLength(1)
+                    .IsRequired();
+
+                // 2. Relación con Colegio (Muchos PUC pertenecen a un Colegio)
+                entity.HasOne(p => p.Colegio)
+                    .WithMany()
+                    .HasForeignKey(p => p.ColegioId)
+                    .OnDelete(DeleteBehavior.Cascade); // Si se borra el colegio, se borran sus cuentas personalizadas
+
+                // 3. Relación Autorreferencial (Padre -> Hijos)
+                // NOTA: Al ser llave compuesta, la relación debe apuntar a ambos campos
+                entity.HasOne(p => p.Padre)
+                    .WithMany(p => p.Hijos)
+                    .HasForeignKey(p => new { p.CodigoPadre, p.ColegioId })
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
         }
+
+
+
+
     }
 
 }
