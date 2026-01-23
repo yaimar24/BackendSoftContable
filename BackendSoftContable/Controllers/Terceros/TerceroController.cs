@@ -30,7 +30,6 @@ public class TerceroController : ControllerBase
     [HttpPost("vincular")]
     public async Task<IActionResult> Create([FromBody] TerceroCreateDTO dto)
     {
-
         var response = await _service.CreateWithCategoryAsync(dto, GetUsuarioId());
         return response.Success ? Ok(response) : BadRequest(response);
     }
@@ -45,10 +44,18 @@ public class TerceroController : ControllerBase
         return response.Success ? Ok(response) : BadRequest(response);
     }
 
-    [HttpPatch("status/{terceroId:guid}")] 
+    [HttpPatch("status/{terceroId:guid}")]
     public async Task<IActionResult> DesvincularTercero(Guid terceroId)
     {
         var response = await _service.DesvincularTerceroAsync(terceroId, GetColegioId(), GetUsuarioId());
+        return response.Success ? Ok(response) : BadRequest(response);
+    }
+
+    // 🔹 NUEVO ENDPOINT: Obtener clientes por colegio y opcionalmente filtrar por nombre
+    [HttpGet("clientes")]
+    public async Task<IActionResult> GetClientes([FromQuery] string? nombre)
+    {
+        var response = await _service.GetClientesAsync(GetColegioId(), nombre);
         return response.Success ? Ok(response) : BadRequest(response);
     }
 }

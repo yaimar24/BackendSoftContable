@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using BackendSoftContable.Models;
 using BackendSoftContable.Models.Terceros;
+using BackendSoftContable.Models.TipoFactura;
 
 namespace BackendSoftContable.Data
 {
@@ -30,6 +31,7 @@ namespace BackendSoftContable.Data
         public DbSet<TerceroResponsabilidad> TerceroResponsabilidad { get; set; } = null!;
         public DbSet<Categoria> Categorias { get; set; } = null!;
         public DbSet<AuditoriaLog> AuditoriaLog { get; set; } = null!;
+        public DbSet<TipoFactura> TipoFacturas { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

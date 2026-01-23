@@ -8,6 +8,7 @@ using BackendSoftContable.Interfaces.Services;
 using BackendSoftContable.Models;
 using BackendSoftContable.Models.Terceros;
 using BackendSoftContable.Utils;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BackendSoftContable.Services.TerceroService;
@@ -107,6 +108,54 @@ public class TerceroService : ITerceroService
                 .Fail($"Error al crear tercero: {ex.Message}");
         }
     }
+
+
+    public async Task<ApiResponseDTO<List<TerceroClienteDTO>>> GetClientesAsync(
+         Guid colegioId,
+         string? nombreFiltro = null)
+    {
+        try
+        {
+            // Query base: clientes activos vinculados al colegio
+            var query = _context.Tercero
+                .AsNoTracking()
+                .Where(t => t.Activo
+                            && t.Categorias.Any(c => c.ColegioId == colegioId && c.Activo)
+                            && t.TipoPersonaId == 1); 
+
+            // Filtrar por nombre si se envía parámetro
+            if (!string.IsNullOrEmpty(nombreFiltro))
+            {
+                string filtroLower = nombreFiltro.ToLower();
+
+                query = query.Where(t =>
+                    (t.NombreComercial != null && t.NombreComercial.ToLower().StartsWith(filtroLower)) ||
+                    (t.Nombres != null && t.Nombres.ToLower().StartsWith(filtroLower)) ||
+                    (t.Apellidos != null && t.Apellidos.ToLower().StartsWith(filtroLower))
+                );
+            }
+
+            // Seleccionar solo los campos necesarios
+            var clientes = await query
+                .Select(t => new TerceroClienteDTO
+                {
+                    Id = t.Id,
+                    NombreCompleto = t.Nombres,
+                    Identificacion = t.Identificacion
+                })
+                .OrderBy(t => t.NombreCompleto) // Opcional: ordenar por nombre
+                .ToListAsync();
+
+            return ApiResponseDTO<List<TerceroClienteDTO>>
+                .SuccessResponse(clientes, "Clientes obtenidos correctamente.");
+        }
+        catch (Exception ex)
+        {
+            return ApiResponseDTO<List<TerceroClienteDTO>>
+                .Fail($"Error al obtener clientes: {ex.Message}");
+        }
+    }
+    
 
     // ========================= UPDATE =========================
 

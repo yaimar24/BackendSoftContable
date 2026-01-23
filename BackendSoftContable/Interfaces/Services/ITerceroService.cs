@@ -24,5 +24,10 @@ namespace BackendSoftContable.Interfaces.Services
         /// Cambia el estado de activación (Activo/Inactivo) de un tercero en un colegio.
         /// </summary>
         Task<ApiResponseDTO<Guid>> DesvincularTerceroAsync(Guid terceroId, Guid colegioId, Guid usuarioId);
+
+        /// <summary>
+        /// Obtiene todos los clientes vinculados a un colegio, opcionalmente filtrando por nombre.
+        /// </summary>
+        Task<ApiResponseDTO<List<TerceroClienteDTO>>> GetClientesAsync(Guid colegioId, string? nombreFiltro = null);
     }
 }
